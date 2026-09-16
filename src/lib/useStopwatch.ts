@@ -9,7 +9,7 @@ export function useStopwatch() {
   const [isRunning, setIsRunning] = useState(false);
   const startTimeRef = useRef<number | null>(null);
   const accumulatedRef = useRef(0);
-  const rafRef = useRef<number>();
+  const rafRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     if (!isRunning) return;
