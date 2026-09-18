@@ -2,36 +2,34 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "../components/Card";
 import { Button } from "../components/Button";
-import { Stopwatch } from "../components/Stopwatch";
 import { StrokePill, PlainPill } from "../components/StrokePill";
 import { Stroke } from "../lib/theme";
 import { useAuth } from "../lib/AuthContext";
-import { useStopwatch } from "../lib/useStopwatch";
 import { insertSwimTime, timeStringToCentiseconds } from "../lib/times";
 
-const strokes: Stroke[] = ["crawl", "costas", "borboleta", "peito"];
+const strokes: Stroke[] = ["crawl", "costas", "borboleta", "peito", "medley"];
 const distances = [25, 50, 100, 200];
+
+type Mode = "treino" | "competicao";
 
 export function LogTimeScreen() {
   const { session } = useAuth();
   const navigate = useNavigate();
-  const stopwatch = useStopwatch();
 
+  const [mode, setMode] = useState<Mode>("treino");
   const [stroke, setStroke] = useState<Stroke>("crawl");
   const [distance, setDistance] = useState(50);
-  const [isCompetition, setIsCompetition] = useState(false);
+  const [competitionDetails, setCompetitionDetails] = useState("");
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Alterna entre cronômetro ao vivo e digitação manual (ex: tempo anotado
-  // na prancheta durante o treino e lançado depois).
-  const [manualEntry, setManualEntry] = useState(false);
-  const [manualValue, setManualValue] = useState(""); // formato "00:31.02"
+  // Tempo é sempre digitado manualmente — o cronômetro interno foi removido
+  // porque o que vale oficialmente é o tempo do cronometrista na beira da piscina.
+  const [timeValue, setTimeValue] = useState(""); // formato "00:31.02"
 
   function getCentiseconds(): number | null {
-    if (!manualEntry) return stopwatch.centiseconds || null;
-    if (!/^\d{2}:\d{2}\.\d{2}$/.test(manualValue)) return null;
-    return timeStringToCentiseconds(manualValue);
+    if (!/^\d{2}:\d{2}\.\d{2}$/.test(timeValue)) return null;
+    return timeStringToCentiseconds(timeValue);
   }
 
   async function handleSave() {
@@ -39,11 +37,7 @@ export function LogTimeScreen() {
 
     const centiseconds = getCentiseconds();
     if (!centiseconds) {
-      setErrorMsg(
-        manualEntry
-          ? "Digite o tempo no formato 00:31.02."
-          : "Registre um tempo antes de salvar."
-      );
+      setErrorMsg("Digite o tempo no formato 00:31.02.");
       return;
     }
 
@@ -55,7 +49,8 @@ export function LogTimeScreen() {
       stroke,
       distance,
       timeCentiseconds: centiseconds,
-      isCompetition,
+      isCompetition: mode === "competicao",
+      competitionDetails: competitionDetails.trim() || undefined,
     });
 
     setSaving(false);
@@ -65,17 +60,36 @@ export function LogTimeScreen() {
       return;
     }
 
-    // Vai pra tela de comparação/resultado com o tempo recém-salvo,
-    // que busca lá o melhor/pior daquele estilo+distância.
-    navigate(`/comparacao?stroke=${stroke}&distance=${distance}`);
-    stopwatch.reset();
-    setManualValue("");
+        navigate(`/comparacao?stroke=${stroke}&distance=${distance}&mode=${mode}`);
+    setTimeValue("");
+    setCompetitionDetails("");
   }
 
   return (
     <div className="bg-base min-h-screen flex flex-col gap-3 p-4">
       <div className="text-xs font-semibold text-ink-soft">novo registro</div>
-      <div className="font-display font-semibold text-lg text-ink">Qual estilo?</div>
+
+      {/* Abas Treino / Competição */}
+      <div className="flex rounded-lg border-[1.5px] border-line overflow-hidden">
+        <button
+          onClick={() => setMode("treino")}
+          className={`flex-1 py-2 text-sm font-semibold transition-colors ${
+            mode === "treino" ? "bg-ink text-white" : "bg-white text-ink-soft"
+          }`}
+        >
+          Treino
+        </button>
+        <button
+          onClick={() => setMode("competicao")}
+          className={`flex-1 py-2 text-sm font-semibold transition-colors ${
+            mode === "competicao" ? "bg-ink text-white" : "bg-white text-ink-soft"
+          }`}
+        >
+          Competição
+        </button>
+      </div>
+
+      <div className="font-display font-semibold text-lg text-ink mt-1">Qual estilo?</div>
 
       <div className="grid grid-cols-2 gap-2">
         {strokes.map((s) => (
@@ -95,58 +109,30 @@ export function LogTimeScreen() {
         ))}
       </div>
 
-      <div className="flex items-center justify-between mt-1">
-        <span className="text-xs font-semibold text-ink-soft">tempo</span>
-        <button
-          onClick={() => {
-            setManualEntry((v) => !v);
-            setErrorMsg(null);
-          }}
-          className="text-[0.68rem] text-ink-soft underline"
-        >
-          {manualEntry ? "usar cronômetro" : "digitar manualmente"}
-        </button>
-      </div>
+      <div className="text-xs font-semibold text-ink-soft mt-1">tempo</div>
 
       <Card className="flex flex-col items-center gap-3 py-4">
-        {!manualEntry ? (
-          <>
-            <Stopwatch value={stopwatch.formatted} size="lg" />
-            <div className="flex gap-2 w-full">
-              {!stopwatch.isRunning ? (
-                <Button variant="solid" onClick={stopwatch.start} className="flex-1">
-                  {stopwatch.centiseconds > 0 ? "Retomar" : "Iniciar"}
-                </Button>
-              ) : (
-                <Button variant="solid" onClick={stopwatch.pause} className="flex-1">
-                  Pausar
-                </Button>
-              )}
-              <Button variant="ghost" onClick={stopwatch.reset} className="flex-1">
-                Zerar
-              </Button>
-            </div>
-          </>
-        ) : (
-          <input
-            type="text"
-            placeholder="00:31.02"
-            value={manualValue}
-            onChange={(e) => setManualValue(e.target.value)}
-            className="h-11 w-full text-center rounded-lg border-[1.5px] border-line font-display text-xl tabular-nums outline-none focus:border-crawl"
-          />
-        )}
+        <input
+          type="text"
+          placeholder="00:31.02"
+          value={timeValue}
+          onChange={(e) => setTimeValue(e.target.value)}
+          className="h-11 w-full text-center rounded-lg border-[1.5px] border-line font-display text-xl tabular-nums outline-none focus:border-crawl"
+        />
       </Card>
 
-      <label className="flex items-center gap-2 text-xs text-ink-soft">
-        <input
-          type="checkbox"
-          checked={isCompetition}
-          onChange={(e) => setIsCompetition(e.target.checked)}
-          className="w-4 h-4 accent-ink"
-        />
-        é competição (não treino)
-      </label>
+      {mode === "competicao" && (
+        <>
+          <div className="text-xs font-semibold text-ink-soft mt-1">local, dia e data</div>
+          <textarea
+            placeholder="Ex: Campeonato Estadual, Clube X, 15/09/2026"
+            value={competitionDetails}
+            onChange={(e) => setCompetitionDetails(e.target.value)}
+            rows={2}
+            className="w-full rounded-lg border-[1.5px] border-line p-2.5 text-sm outline-none focus:border-crawl resize-none"
+          />
+        </>
+      )}
 
       {errorMsg && <div className="text-xs text-[#C24E4E]">{errorMsg}</div>}
 

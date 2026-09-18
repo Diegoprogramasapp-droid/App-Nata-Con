@@ -8,6 +8,7 @@ export type SwimTime = {
   distance: number;
   time_centiseconds: number;
   is_competition: boolean;
+  competition_details: string | null;
   recorded_at: string;
 };
 
@@ -38,6 +39,7 @@ export async function insertSwimTime(params: {
   distance: number;
   timeCentiseconds: number;
   isCompetition: boolean;
+  competitionDetails?: string;
 }) {
   const { data, error } = await supabase
     .from("swim_times")
@@ -47,6 +49,7 @@ export async function insertSwimTime(params: {
       distance: params.distance,
       time_centiseconds: params.timeCentiseconds,
       is_competition: params.isCompetition,
+      competition_details: params.isCompetition ? params.competitionDetails ?? null : null,
     })
     .select()
     .single();
@@ -54,7 +57,7 @@ export async function insertSwimTime(params: {
   return { data, error: error?.message ?? null };
 }
 
-export async function fetchSwimTimes(userId: string, stroke?: Stroke) {
+export async function fetchSwimTimes(userId: string, stroke?: Stroke, isCompetition?: boolean) {
   let query = supabase
     .from("swim_times")
     .select("*")
@@ -62,6 +65,7 @@ export async function fetchSwimTimes(userId: string, stroke?: Stroke) {
     .order("recorded_at", { ascending: false });
 
   if (stroke) query = query.eq("stroke", stroke);
+  if (isCompetition !== undefined) query = query.eq("is_competition", isCompetition);
 
   const { data, error } = await query;
   return { data: (data as SwimTime[]) ?? [], error: error?.message ?? null };
@@ -69,14 +73,22 @@ export async function fetchSwimTimes(userId: string, stroke?: Stroke) {
 
 // Retorna o melhor (menor) e pior (maior) tempo pra um estilo+distância específicos.
 // Usado na tela de comparação/resultado logo depois de salvar um novo tempo.
-export async function fetchBestAndWorst(userId: string, stroke: Stroke, distance: number) {
-  const { data, error } = await supabase
+export async function fetchBestAndWorst(
+  userId: string,
+  stroke: Stroke,
+  distance: number,
+  isCompetition?: boolean
+) {
+  let query = supabase
     .from("swim_times")
     .select("time_centiseconds")
     .eq("user_id", userId)
     .eq("stroke", stroke)
-    .eq("distance", distance)
-    .order("time_centiseconds", { ascending: true });
+    .eq("distance", distance);
+
+  if (isCompetition !== undefined) query = query.eq("is_competition", isCompetition);
+
+  const { data, error } = await query.order("time_centiseconds", { ascending: true });
 
   if (error || !data || data.length === 0) {
     return { best: null, worst: null, error: error?.message ?? null };
@@ -101,4 +113,48 @@ export async function upsertProfile(userId: string, fields: Record<string, unkno
     .select()
     .single();
   return { data, error: error?.message ?? null };
+}
+
+// Agrupa os tempos por estilo, filtrando por treino ou competição.// Pra cada estilo, retorna o melhor tempo e a distância do registro mais recente
+// (usada pra abrir o gráfico já na distância que o atleta mais usa).
+export type StrokeSummary = {
+  stroke: Stroke;
+  bestCentiseconds: number;
+  mostRecentDistance: number;
+};
+
+export async function fetchStrokeSummaries(
+  userId: string,
+  isCompetition: boolean
+): Promise<{ data: StrokeSummary[]; error: string | null }> {
+  const { data, error } = await supabase
+    .from("swim_times")
+    .select("stroke, distance, time_centiseconds, recorded_at")
+    .eq("user_id", userId)
+    .eq("is_competition", isCompetition)
+    .order("recorded_at", { ascending: false });
+
+  if (error || !data) {
+    return { data: [], error: error?.message ?? null };
+  }
+
+  const summaries: Record<string, StrokeSummary> = {};
+
+  (data as { stroke: Stroke; distance: number; time_centiseconds: number; recorded_at: string }[]).forEach(
+    (row) => {
+      const existing = summaries[row.stroke];
+      if (!existing) {
+        // primeiro registro encontrado pra esse estilo = o mais recente (já ordenado)
+        summaries[row.stroke] = {
+          stroke: row.stroke,
+          bestCentiseconds: row.time_centiseconds,
+          mostRecentDistance: row.distance,
+        };
+      } else if (row.time_centiseconds < existing.bestCentiseconds) {
+        existing.bestCentiseconds = row.time_centiseconds;
+      }
+    }
+  );
+
+  return { data: Object.values(summaries), error: null };
 }
