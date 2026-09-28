@@ -64,13 +64,23 @@ export function ComparisonScreen() {
   const min = Math.min(...points);
   const max = Math.max(...points);
   const range = max - min || 1;
-  const svgPoints = points
-    .map((p, i) => {
-      const x = 10 + (i * 200) / Math.max(points.length - 1, 1);
-      const y = 10 + 80 * ((p - min) / range);
-      return `${x},${90 - y}`;
-    })
-    .join(" ");
+
+  // Coordenadas (x,y) de cada ponto, reaproveitadas tanto pra linha quanto pros círculos
+       const coords = points.map((p, i) => {
+    const x = 10 + (i * 200) / Math.max(points.length - 1, 1);
+    const yLocal = 18 + 64 * ((p - min) / range);
+    return { x, y: 100 - yLocal, value: p };
+  });
+  const svgPoints = coords.map((c) => `${c.x},${c.y}`).join(" ");
+
+  // Fecha a área embaixo da linha (até a base do gráfico) pro preenchimento gradiente
+     const areaPath =
+    coords.length > 1
+      ? `M${coords[0].x},98 ` +
+        coords.map((c) => `L${c.x},${c.y}`).join(" ") +
+        ` L${coords[coords.length - 1].x},98 Z`
+      : "";
+  const gradientId = `grad-${stroke}`;
 
   return (
     <div className="bg-base min-h-screen flex flex-col gap-3 p-4">
@@ -124,6 +134,17 @@ export function ComparisonScreen() {
           <Card className="flex-1 min-h-[110px] p-2">
             {points.length > 1 ? (
               <svg viewBox="0 0 220 100" className="w-full h-full">
+                <defs>
+                  <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={strokeColors[stroke].solid} stopOpacity={0.35} />
+                    <stop offset="100%" stopColor={strokeColors[stroke].solid} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+
+                {/* Preenchimento gradiente abaixo da linha */}
+                <path d={areaPath} fill={`url(#${gradientId})`} />
+
+                {/* Linha de evolução */}
                 <polyline
                   points={svgPoints}
                   fill="none"
@@ -132,6 +153,22 @@ export function ComparisonScreen() {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
+
+                {/* Pontos em cada registro — o melhor tempo ganha destaque dourado */}
+                {coords.map((c, i) => {
+                  const isBestPoint = points[i] === best;
+                  return (
+                    <circle
+                      key={i}
+                      cx={c.x}
+                      cy={c.y}
+                      r={isBestPoint ? 2 : 1.5}
+                      fill={isBestPoint ? "#FFB627" : "#fff"}
+                      stroke={strokeColors[stroke].solid}
+                      strokeWidth={1.5}
+                    />
+                  );
+                })}
               </svg>
             ) : (
               <div className="text-xs text-ink-soft text-center py-8">
