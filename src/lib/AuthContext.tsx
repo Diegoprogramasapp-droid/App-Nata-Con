@@ -17,13 +17,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+   useEffect(() => {
+    console.log("AuthContext: useEffect disparou, chamando getSession...");
     supabase.auth.getSession().then(({ data }) => {
+      console.log("AuthContext: getSession respondeu dentro do useEffect", data);
       setSession(data.session);
       setLoading(false);
     });
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+        const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("AuthContext: onAuthStateChange disparou, event =", event);
       setSession(session);
     });
 

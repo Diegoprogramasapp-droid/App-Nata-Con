@@ -1,3 +1,4 @@
+import { PaymentPendingScreen } from "./screens/PaymentPendingScreen";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./lib/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -19,7 +20,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<OnboardingScreen />} />
-
+<Route path="/pagamento-pendente" element={<PaymentPendingScreen />} />
           <Route
             path="/"
             element={

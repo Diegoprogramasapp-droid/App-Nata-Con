@@ -23,7 +23,7 @@ export function OnboardingScreen() {
     setLoading(true);
     setErrorMsg(null);
 
-    const { error } = mode === "login" ? await signIn(email, password) : await signUp(email, password);
+        const { error } = mode === "login" ? await signIn(email, password) : await signUp(email, password);
 
     setLoading(false);
 
@@ -32,7 +32,7 @@ export function OnboardingScreen() {
       return;
     }
 
-    navigate("/");
+    navigate(mode === "cadastro" ? "/pagamento-pendente" : "/");
   }
 
   return (
