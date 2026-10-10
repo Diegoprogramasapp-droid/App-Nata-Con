@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "../components/Card";
 import { Button } from "../components/Button";
+import { BottomNav } from "../components/BottomNav";
 import { StrokePill, PlainPill } from "../components/StrokePill";
 import { Stroke } from "../lib/theme";
 import { useAuth } from "../lib/AuthContext";
@@ -60,7 +61,7 @@ export function LogTimeScreen() {
       return;
     }
 
-        navigate(`/comparacao?stroke=${stroke}&distance=${distance}&mode=${mode}`);
+    navigate(`/comparacao?stroke=${stroke}&distance=${distance}&mode=${mode}`);
     setTimeValue("");
     setCompetitionDetails("");
   }
@@ -140,6 +141,15 @@ export function LogTimeScreen() {
       <Button variant="solid" onClick={handleSave} disabled={saving}>
         {saving ? "Salvando..." : "Salvar tempo"}
       </Button>
+
+                 <BottomNav
+        active="registrar"
+        onChange={(key) => {
+          if (key === "inicio") navigate("/");
+          if (key === "historico") navigate("/historico");
+          if (key === "perfil") navigate("/configuracoes");
+        }}
+      />
     </div>
   );
 }
