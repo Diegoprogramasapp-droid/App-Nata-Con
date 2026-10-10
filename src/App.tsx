@@ -2,6 +2,7 @@ import { PaymentPendingScreen } from "./screens/PaymentPendingScreen";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./lib/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { PrivacyScreen } from "./screens/PrivacyScreen";
 
 import { OnboardingScreen } from "./screens/OnboardingScreen";
 import { DashboardScreen } from "./screens/DashboardScreen";
@@ -21,6 +22,7 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<OnboardingScreen />} />
 <Route path="/pagamento-pendente" element={<PaymentPendingScreen />} />
+   <Route path="/privacidade" element={<PrivacyScreen />} />
           <Route
             path="/"
             element={

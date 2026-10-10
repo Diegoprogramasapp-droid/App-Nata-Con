@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Field } from "../components/Field";
 import { Button } from "../components/Button";
 import { useAuth } from "../lib/AuthContext";
@@ -23,7 +23,8 @@ export function OnboardingScreen() {
     setLoading(true);
     setErrorMsg(null);
 
-        const { error } = mode === "login" ? await signIn(email, password) : await signUp(email, password);
+    const { error } =
+      mode === "login" ? await signIn(email, password) : await signUp(email, password);
 
     setLoading(false);
 
@@ -63,6 +64,16 @@ export function OnboardingScreen() {
       <Button variant="solid" onClick={handleSubmit} disabled={loading}>
         {loading ? "Aguarde..." : mode === "login" ? "Entrar" : "Criar conta"}
       </Button>
+
+      {mode === "cadastro" && (
+        <div className="text-[0.65rem] leading-snug text-ink-soft text-center">
+          Ao criar a conta, você confirma ser o adulto responsável pelo atleta. Guardamos só os
+          dados necessários para o app funcionar e não os compartilhamos nem vendemos.{" "}
+          <Link to="/privacidade" className="text-ink font-semibold underline">
+            Política de privacidade
+          </Link>
+        </div>
+      )}
 
       <button
         onClick={() => {
