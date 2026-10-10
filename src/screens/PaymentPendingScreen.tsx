@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { Card } from "../components/Card";
 import { Button } from "../components/Button";
 import { useAuth } from "../lib/AuthContext";
@@ -9,9 +9,11 @@ const PIX_KEY = "0e3a7d65-4f88-479f-bde8-e7420256565c";
 const WHATSAPP = "5511947945177";
 
 export function PaymentPendingScreen() {
-  const { signOut, session } = useAuth();
+  const { signOut, session, loading } = useAuth();
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
+   if (loading) return null;
+   if (!session) return <Navigate to="/login" replace />;
 
   async function handleSignOut() {
     await signOut();
