@@ -13,6 +13,7 @@ export function OnboardingScreen() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [infoMsg, setInfoMsg] = useState<string | null>(null);
 
   async function handleSubmit() {
     if (!email || !password) {
@@ -22,6 +23,7 @@ export function OnboardingScreen() {
 
     setLoading(true);
     setErrorMsg(null);
+    setInfoMsg(null);
 
     const { error } =
       mode === "login" ? await signIn(email, password) : await signUp(email, password);
@@ -33,7 +35,16 @@ export function OnboardingScreen() {
       return;
     }
 
-    navigate(mode === "cadastro" ? "/pagamento-pendente" : "/");
+    if (mode === "cadastro") {
+      setInfoMsg(
+        `Conta criada! Enviamos um link de confirmação para ${email}. Abra o e-mail (olhe também o spam), toque no link e depois siga para o pagamento.`
+      );
+      setMode("login");
+      setPassword("");
+      return;
+    }
+
+    navigate("/");
   }
 
   return (
@@ -45,6 +56,12 @@ export function OnboardingScreen() {
           registre cada tempo, bata seu recorde
         </div>
       </div>
+
+      {infoMsg && (
+        <div className="text-xs text-ink bg-white border-[1.5px] border-line rounded-lg p-3 leading-snug">
+          {infoMsg}
+        </div>
+      )}
 
       <Field
         placeholder="E-mail"
@@ -79,6 +96,7 @@ export function OnboardingScreen() {
         onClick={() => {
           setMode(mode === "login" ? "cadastro" : "login");
           setErrorMsg(null);
+          setInfoMsg(null);
         }}
         className="text-xs text-ink-soft text-center"
       >

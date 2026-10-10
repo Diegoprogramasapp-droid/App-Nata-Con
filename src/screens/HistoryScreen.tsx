@@ -77,15 +77,20 @@ export function HistoryScreen() {
         return (
           <Card key={e.id} accentColor={isBest ? "#FFB627" : undefined} className="flex items-center gap-2.5">
             <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
-                        <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <Stopwatch value={centisecondsToTimeString(e.time_centiseconds)} size="sm" />
               <div className="text-[0.68rem] text-ink-soft">
                 {e.distance}m · {e.is_competition ? "competição" : "treino"} ·{" "}
                 {new Date(e.recorded_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
               </div>
               {e.is_competition && e.competition_details && (
-                <div className="text-[0.68rem] text-ink-soft italic mt-0.5">
+                <div className="text-[0.68rem] text-ink-soft italic mt-0.5 break-words">
                   {e.competition_details}
+                </div>
+              )}
+              {!e.is_competition && e.notes && (
+                <div className="text-[0.68rem] text-ink-soft italic mt-0.5 break-words">
+                  {e.notes}
                 </div>
               )}
             </div>

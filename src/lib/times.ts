@@ -9,6 +9,7 @@ export type SwimTime = {
   time_centiseconds: number;
   is_competition: boolean;
   competition_details: string | null;
+  notes: string | null;
   recorded_at: string;
 };
 
@@ -40,6 +41,7 @@ export async function insertSwimTime(params: {
   timeCentiseconds: number;
   isCompetition: boolean;
   competitionDetails?: string;
+  notes?: string;
 }) {
   const { data, error } = await supabase
     .from("swim_times")
@@ -50,6 +52,7 @@ export async function insertSwimTime(params: {
       time_centiseconds: params.timeCentiseconds,
       is_competition: params.isCompetition,
       competition_details: params.isCompetition ? params.competitionDetails ?? null : null,
+            notes: params.notes ?? null,
     })
     .select()
     .single();

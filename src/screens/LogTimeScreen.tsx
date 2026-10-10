@@ -21,6 +21,7 @@ export function LogTimeScreen() {
   const [stroke, setStroke] = useState<Stroke>("crawl");
   const [distance, setDistance] = useState(50);
   const [competitionDetails, setCompetitionDetails] = useState("");
+  const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -52,6 +53,7 @@ export function LogTimeScreen() {
       timeCentiseconds: centiseconds,
       isCompetition: mode === "competicao",
       competitionDetails: competitionDetails.trim() || undefined,
+      notes: mode === "treino" ? notes.trim() || undefined : undefined,
     });
 
     setSaving(false);
@@ -64,6 +66,7 @@ export function LogTimeScreen() {
     navigate(`/comparacao?stroke=${stroke}&distance=${distance}&mode=${mode}`);
     setTimeValue("");
     setCompetitionDetails("");
+    setNotes("");
   }
 
   return (
@@ -122,6 +125,20 @@ export function LogTimeScreen() {
         />
       </Card>
 
+      {mode === "treino" && (
+        <>
+          <div className="text-xs font-semibold text-ink-soft mt-1">anotação (opcional)</div>
+          <textarea
+            placeholder="Ex: treino de saída, senti o ombro pesado, nadei com palmar"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={2}
+            maxLength={300}
+            className="w-full rounded-lg border-[1.5px] border-line p-2.5 text-sm outline-none focus:border-crawl resize-none"
+          />
+        </>
+      )}
+
       {mode === "competicao" && (
         <>
           <div className="text-xs font-semibold text-ink-soft mt-1">local, dia e data</div>
@@ -142,7 +159,7 @@ export function LogTimeScreen() {
         {saving ? "Salvando..." : "Salvar tempo"}
       </Button>
 
-                 <BottomNav
+      <BottomNav
         active="registrar"
         onChange={(key) => {
           if (key === "inicio") navigate("/");
